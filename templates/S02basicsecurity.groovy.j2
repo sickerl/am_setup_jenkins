@@ -1,0 +1,60 @@
+#!groovy
+
+// kate: tab-indents on; replace-tabs off; indent-width 4; hl java;
+
+import jenkins.model.*
+import hudson.security.*
+
+def instance = Jenkins.getInstance();
+
+def myRealm = instance.getSecurityRealm();
+println( "current security strategy:" + myRealm.getClass().getName() );
+if ( myRealm.getClass().getName() != 'hudson.security.HudsonPrivateSecurityRealm' ) {
+	myRealm = new HudsonPrivateSecurityRealm(false);
+	instance.setSecurityRealm(myRealm);
+}
+
+def myAuthStrat = instance.getAuthorizationStrategy();
+println( "current Authorization strategy:" + myAuthStrat.getClass().getName() );
+if ( myAuthStrat.getClass().getName() != 'hudson.security.ProjectMatrixAuthorizationStrategy' ) {
+	myAuthStrat= new hudson.security.ProjectMatrixAuthorizationStrategy();
+	instance.setAuthorizationStrategy(myAuthStrat);
+}
+
+// check if given user exists
+boolean isUserPresent( hr, uname ) {
+	def rv  = false;
+	hr.each { usr ->
+		//println( "iUP: $uname" );
+		//println( usr.getId() );
+		if ( usr.getId() == uname ) {
+			rv=true;
+		}
+	}
+	return rv;
+}
+
+def hrUserList = myRealm.getAllUsers();
+
+// first create admin user if not already present
+
+if ( ! this.isUserPresent( hrUserList, '{{ APP_JENKINS_ADMIN_USER }}' ) ) {
+	myRealm.createAccount('{{ APP_JENKINS_ADMIN_USER }}','{{ APP_JENKINS_ADMIN_PWD }}');
+	myAuthStrat.add(Jenkins.ADMINISTER, "{{ APP_JENKINS_ADMIN_USER }}");
+	println( "{{ APP_JENKINS_ADMIN_USER }} created" );
+}
+
+// now loop over all defined users
+[{{ APP_JENKINS_USERLIST }}].each { username -> 
+	if ( ! this.isUserPresent( hrUserList, username ) ) {
+		myRealm.createAccount( username, username );
+		myAuthStrat.add( Jenkins.READ, username);
+		println( "$username created" );
+	//} else {
+	//	println( "$username already exists" );
+	}
+	
+}
+
+// instance.setAuthorizationStrategy(myAuthStrat);
+instance.save();

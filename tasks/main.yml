@@ -1,0 +1,88 @@
+---
+# tasks file for am_setup_jenkins
+
+- name:         "Ensure Jenkins-Home exists"
+  file:
+    path:       "{{ APP_JENKINS_HOME }}"
+    state:      directory
+    mode:       0750
+
+- name:         "Ensure Jenkins-webroot exists"
+  file:
+    path:       "{{ APP_JENKINS_BASE }}/webroot"
+    state:      directory
+    mode:       0750
+
+- name:         "Ensure Jenkins-tmp exists"
+  file:
+    path:       "{{ APP_JENKINS_BASE }}/tmp"
+    state:      directory
+    mode:       0750
+
+- name:         "Deploy Jenkins.war"
+  copy:
+    src:        "{{ role_path }}/files/{{ APP_JENKINS_WAR }}"
+    dest:       "{{ APP_JENKINS_BASE }}/jenkins.war"
+  register:     jenkis_war_deployed
+
+- name: "Deploy start stop script and configfile"
+  template:
+    src:        "templates/{{ item }}.j2"
+    dest:       "{{ APP_JENKINS_BASE }}/{{ item }}"
+    mode:       "0750"
+  with_items:
+    - jenkins.cfg
+    - "jenkins-dbm"
+
+- name: "Setup proxy for jenkins updates and plugin installation"
+  template:
+    src:        "templates/proxy.xml.j2"
+    dest:       "{{ APP_JENKINS_HOME }}/proxy.xml"
+    mode:         0640
+
+- name:         "Ensure jenkins post-initialization directory exists"
+  file:
+    path:       "{{ APP_JENKINS_HOME }}/init.groovy.d"
+    state:      directory
+    mode:       0750
+
+- name:         "Setup for Jenkins's plugins"
+  template:
+    src:        "templates/S01installplugins.groovy.j2"
+    dest:       "{{ APP_JENKINS_HOME }}/init.groovy.d/S01installplugins.groovy"
+    mode:       0640
+#  when:         jenkis_war_deployed.changed
+
+
+- name:         "Setup for Jenkins's admin user"
+  template:
+    src:        "templates/S02basicsecurity.groovy.j2"
+    dest:       "{{ APP_JENKINS_HOME }}/init.groovy.d/S02basicsecurity.groovy"
+    mode:       0640
+#  when:         jenkis_war_deployed.changed
+
+#- name:         "Get recommended Plugin list"
+#  command:      "ls {{ role_path }}/files/plugins/"
+#  register:     plugin_list
+#  changed_when:  false
+#  tags:
+#    - tomcat
+#    - tomcat_jenkins
+#
+# - name:         "Ensure plugins directory exits"
+#  file:
+#    path:       "{{ APP_JENKINS_HOME }}/plugins"
+#    state:      directory
+#    mode:       0750
+#  tags:
+#    - tomcat
+#    - tomcat_jenkins
+#
+#- name:         "Stage recommended Plugins"
+#  copy:
+#    src:        "{{ role_path }}/files/plugins/{{ item }}"
+#    dest:       "{{ APP_JENKINS_HOME }}/plugins"
+#    mode:       0640
+#  with_items:   "{{ plugin_list.stdout_lines }}"
+
+

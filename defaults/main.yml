@@ -1,0 +1,26 @@
+---
+# defaults file for am_setup_jenkins
+
+# variables necessary for installation
+APP_BASE:                       "{{ ansible_env.HOME }}"
+
+APP_JENKINS_DIST:               "2.60.1"
+APP_JENKINS_WAR:                "jenkins-{{ APP_JENKINS_DIST }}.war"
+APP_JENKINS_BASE:               "{{ APP_BASE }}/jenkins-{{ APP_JENKINS_DIST }}"
+APP_JENKINS_HOME:               "{{ APP_JENKINS_BASE }}/home"
+APP_JENKINS_PROXY_SERVER:       "app-proxy.eb.lan.at"
+APP_JENKINS_PROXY_PORT:         8080
+APP_JENKINS_ADMIN_USER:         "admin"
+APP_JENKINS_ADMIN_PWD:          "**********"
+APP_JENKINS_PLUGINS:            "'ansible','authorize-project','build-monitor-plugin','build-pipeline-plugin','conditional-buildstep','delivery-pipeline-plugin','git','greenballs','htmlpublisher','matrix-auth','parameterized-trigger','token-macro','xframe-filter-plugin','greenballs'"
+
+
+APP_JENKINS_USERLIST:           "'dbmg','s5907','s5974','cloudforms','mwa'"
+
+APP_JENKINS_PORT:               8080
+APP_JENKINS_LISTEN_ADDRESS:     "127.0.0.1"
+
+APP_JENKINS_ARGS:               "--prefix=/jenkins"
+APP_JENKINS_JAVA_ARGS:          "-Djava.awt.headless=true -Djava.net.preferIPv4Stack=true -Djava.net.preferIPv4Addresses -Xmx1536m -Djenkins.install.runSetupWizard=false -Djava.io.tmpdir={{ APP_JENKINS_BASE }}/tmp"
+
+

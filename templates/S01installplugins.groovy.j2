@@ -1,0 +1,46 @@
+#!groovy
+
+// kate: tab-indents on; replace-tabs off; indent-width 4; hl java;
+
+import jenkins.model.Jenkins;
+
+pm = Jenkins.instance.pluginManager
+uc = Jenkins.instance.updateCenter
+
+deployed = false
+
+def activatePlugin(plugin) {
+	if (! plugin.isEnabled()) {
+		plugin.enable()
+		deployed = true
+	}
+
+	plugin.getDependencies().each {
+		activatePlugin(pm.getPlugin(it.shortName))
+	}
+}
+
+println( "starting plugin loop")
+
+[{{ APP_JENKINS_PLUGINS }}].each {
+	println( "it: " + it )
+	if (! pm.getPlugin(it)) {
+		println( "!pm.getPlugin() " + it )
+		d = uc.getPlugin(it)
+		if ( d != null ) {
+			println( "uc.getPlugin returns not null" )
+			d = uc.getPlugin(it).deploy(true)
+			d.get()
+		} else {
+			println( "uc.getPlugin returns NULL" )
+			println( "null " + it );
+		}
+		activatePlugin(pm.getPlugin(it))
+	}
+}
+
+if (deployed) {
+	println( "deployed, restarting jenkins" );
+	Jenkins.instance.restart()
+}
+
